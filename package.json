@@ -1,0 +1,24 @@
+{
+  "name": "@aero/playground",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "node scripts/gen-demo-sources.mjs",
+    "build": "vite build",
+    "gen-sources": "node scripts/gen-demo-sources.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "aero-vue": "file:../aero-vue",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "sass": "^1.104.1",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  },
+  "license": "MIT"
+}

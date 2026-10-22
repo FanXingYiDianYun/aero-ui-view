@@ -1,0 +1,249 @@
+// Playground 全局补样式（保持 demo 原调性）
+
+/* —— 自托管品牌字体（可变 woff2，latin 子集，离线稳定）——
+   tokens.scss 中 --ui-font-mono/--ui-font-en 声明的 'JetBrains Mono'/
+   'Space Grotesk' 此前从未被加载，CodeBlock 等 mono 场景全部回退到系统
+   ui-monospace/Consolas，字形与 Aero 整体风格脱节；现从 public/fonts
+   直接 @font-face 引入（Google Fonts 抓取的可变字体 latin 切片）。
+   Noto Sans SC 为 CJK 巨族不本地化，仍走 Google Fonts CDN（见 index.html），
+   unicode-range 默认全量：拉丁段优先命中自托管可变字体，CJK 段回源 CDN。 */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/space-grotesk-latin.woff2') format('woff2');
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ui-line-2) transparent;
+  /* 不对 html/body 设 overflow-x:hidden。
+     CSS 规范：overflow-x:hidden 会把 overflow-y 的计算值升级为 auto，
+     使 body 变为「hidden auto」滚动盒——于是 position:sticky 相对 body
+     这个非视口滚动盒定位，而实际滚动源是 window（documentElement），
+     两者错位 → 移动端顶部导航 sticky 完全失效（移除后 top=0 复原）。
+     横向溢出已由 overflow-sweep 全站治理归零，无需再用 overflow-x:hidden 兜底。 */
+  max-width: 100%;
+}
+body {
+  margin: 0;
+  font-family: var(--ui-font);
+  /* 页面背景：中性克制（参考 Linear/Stripe 高级感）——
+     上轮 4 层同色系 radial 堆叠（14%/9%/8%/6%）呈"PPT 聚光灯廉价感"，
+     现只保留两层：① 顶部 5% 品牌色 wash 混入 --ui-bg-tint（200px 内渐隐，
+     仅作冷暖分层）② 超大半径 3% 环境光（150% 椭圆负偏移，几乎不可察觉的纵深）
+     品牌色回归点缀角色（导航线/交互强调），大面积背景保持中性分层 */
+  background:
+    radial-gradient(ellipse 150% 90% at 50% -20%, color-mix(in srgb, var(--ui-brand) 3%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ui-brand) 5%, var(--ui-bg-tint)) 0%, var(--ui-bg) 200px, var(--ui-bg) 100%),
+    var(--ui-bg);
+  background-attachment: fixed;
+  color: var(--ui-ink);
+  font-size: 15.5px;
+  line-height: 1.75;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  max-width: 100%;
+}
+img {
+  max-width: 100%;
+}
+
+/* 页面级滚动条：由浏览器默认细条换成品牌色 12px 圆角条，
+   hover 时加重一档（WebKit 双引擎 + Firefox 标准属性各管一摊） */
+body::-webkit-scrollbar,
+.pg-main::-webkit-scrollbar,
+.pg-side::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+body::-webkit-scrollbar-track,
+.pg-main::-webkit-scrollbar-track,
+.pg-side::-webkit-scrollbar-track {
+  background: transparent;
+}
+body::-webkit-scrollbar-thumb,
+.pg-main::-webkit-scrollbar-thumb,
+.pg-side::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ui-ink-2) 38%, transparent);
+  border-radius: 99px;
+  border: 3px solid var(--ui-bg);
+}
+body:hover::-webkit-scrollbar-thumb,
+.pg-main:hover::-webkit-scrollbar-thumb,
+.pg-side:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ui-ink-2) 62%, transparent);
+}
+
+/* —— 搜索命中高亮（品牌主题色实心底，替代浏览器默认黄底 mark）——
+   ① AeroSearch <mark> 结果高亮（移动菜单内嵌搜索 + 桌面 Search demo 共用）；
+   ② 顶部内联搜索命中侧栏条目（Sidebar hits 以 em.pg-hl 整词包装）
+   底色 --ui-brand 随预设/自定义品牌色联动，on-brand 按品牌亮度自动派生 */
+.aero-search__item mark,
+.pg-side__link em.pg-hl {
+  background: color-mix(in srgb, var(--ui-brand) 84%, transparent);
+  border-radius: 3px;
+  padding: 0 1px;
+  font-style: normal;
+  text-decoration: none;
+}
+
+/* —— 富文本行内元素全局单源（demo 全局样式层单源，替代 App.vue 平行 :deep 自建）——
+   使用容器挂 .pg-prose 类（副标题 .pg-desc / Typography 示例 .inline-els / AI Skill 段 .pg-ai-note）。
+   值来源定死：kbd ← Typography 页原 scoped .kbd 整条规则（basic.vue:121 迁移，副标题侧升级）；
+   code/mark/em ← 副标题通道现值【零变化迁移】（非浏览器默认，mark 保持品牌色擦）。
+   覆盖不变量：迁移后各容器内使用点仍被同值规则覆盖；.pg code（仅 font-family）保留不动。 */
+.pg-prose {
+  kbd {
+    font-family: var(--ui-font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--ui-bg-soft);
+    border: 2px solid var(--ui-line-2);
+    border-bottom-width: 3.5px;
+    border-radius: 8px;
+    padding: 2px 8px;
+    margin: 0;
+    /* color = 副标题通道原值（--ui-ink）补齐：Typography 原规则未声明 color，
+       两通道 kbd 继承上下文色不等（Typography 页 body 默认 --ui-ink vs 副标题 .pg-desc --ui-ink-2）
+       → 取副标题原值拉平（零新设计值，逐属性相等要求），计入目的性变化 */
+    color: var(--ui-ink);
+  }
+  code {
+    font-family: var(--ui-font-mono);
+    font-size: 0.88em;
+    background: var(--ui-bg-soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--ui-ink);
+  }
+  mark {
+    /* 高亮擦条·行片段友好实现（替代旧「单 ::after 盒」方案）
+       旧 ::after 方案为参照 AeroTypography .is-highlight（display:inline-block; white-space:nowrap，
+       永不换行）设计；本容器 .pg-prose mark 是可换行裸 inline，文字跨行时单个 ::after 盒
+       （union left:0/right:0/bottom:0.05em）不再贴合每行片段，叠 z-index:-1 后条在跨行标记上
+       不渲染。故改用「元素自身 background 底部擦条 + box-decoration-break:clone」：
+       clone 令跨行每行片段独立绘制自身 background 条；background-size 0% 0.3em → 100% 0.3em
+       （宽度 0%→100%）保留「从左到右从无到有擦除」动效，与参照 ui-wipe-in 的 scaleX(0→1) 同向。
+       终态静止 = 每行片段底部见 0.3em var(--ui-brand) 条 + 文本 var(--ui-brand-ink)。
+       显式 transparent 压制 <mark> 的 UA 默认黄底；Typography 样本区（.inline-els pg-prose，无 <mark>）零命中。 */
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    background-color: transparent;
+    background-image: linear-gradient(var(--ui-brand), var(--ui-brand));
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    /* 默认 = 终态静止（条已画满）；.is-armed = 尚未进入视口的待触发态（条 0 宽，藏起）；
+       .is-erasing = 滚入视口后播放一次 pg-mark-erase（0%→100% 擦入，both 终态 100%）。
+       触发器 = App.vue IntersectionObserver：进入 ai-guide 路由 / 切 locale 重建 mark 后先武装 .is-armed，
+       滚入视口一次 → 挂 .is-erasing 播放 → animationend 移除双类回落默认终态（播放一次，不重播）。
+       Typography 样本区与参照 .is-highlight 组件（lib 作用域，自带 replay）零命中。 */
+    background-size: 100% 0.3em;
+    color: var(--ui-brand-ink);
+    /* 字号与 Typography 高亮样例对齐（900 计算值源：basic.vue 高亮行字号档，.is-highlight 规则本身未声明字重；双主题同一计算链，非主题敏感值）。 */
+    font-weight: 900;
+    &.is-armed {
+      background-size: 0% 0.3em;
+    }
+    &.is-erasing {
+      animation: pg-mark-erase 1s var(--ui-ease) both;
+    }
+  }
+  em {
+    font-style: italic;
+    color: var(--ui-ink);
+  }
+}
+
+/* 副标题通道 kbd 水平间隙：仅锁 .pg-desc 容器（副标题），不波及 Typography 页
+   .inline-els（该页宽松感来自容器 flex gap，.inline-els 未挂 .pg-desc 故零命中）。
+   margin:0 之上提级覆盖 margin-inline。 */
+.pg-desc kbd {
+  margin-inline: 0.35em;
+}
+
+/* 副标题通道内联 code → AeroTag 视觉规格（作用域锁定 .pg-desc，仅副标题命中）
+   复制 AeroTag 渲染态规格：--ui-bg-tint 底 / --ui-brand-ink 字 / 12px / 700 /
+   padding 2px 9px / border-radius var(--ui-radius-xs)(8px) / mono 字体。
+   lib 作用域哈希样式对 v-html 副标题不可达 → 演示全局层复制；.pg-prose code 旧规则零改，
+   .pg-ai-note / .inline-els code 与 AeroCodeBlock（组件类，非 .pg-desc 后代）零命中（作用域隔离，无跨通道影响）。
+   与 kbd 同提级模式：特异性 (.pg-desc code = 0,2,0) 与 (.pg-prose code = 0,2,0) 同级 →
+   同文件后写者胜（source order），故副标题通道命中 AeroTag 规格，其余 .pg-prose 容器不变。 */
+.pg-desc code {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: var(--ui-radius-xs);
+  background: var(--ui-bg-tint);
+  color: var(--ui-brand-ink);
+  font-family: var(--ui-font-mono);
+}
+
+/* 演示进度控制滑块：原生 input[type=range] 主题化（替代浏览器默认灰条），
+   与 Aero 组件视觉统一 —— 品牌色轨道填充 + 圆角滑块 + focus 环 */
+input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--ui-line);
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--ui-brand);
+    border: 2.5px solid var(--ui-card);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    cursor: grab;
+    transition: box-shadow 0.15s;
+  }
+  &::-webkit-slider-thumb:active { cursor: grabbing; }
+  &::-webkit-slider-thumb:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ui-brand) 25%, transparent);
+  }
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--ui-brand);
+    border: 2.5px solid var(--ui-card);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    cursor: grab;
+  }
+  &::-moz-range-track {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--ui-line);
+  }
+}
+::selection {
+  background: color-mix(in srgb, var(--ui-brand) 30%, transparent);
+  color: var(--ui-ink);
+}
+
+/* 高亮擦条擦入动画（.pg-prose mark 专用）：background-size 0% 0.3em → 100% 0.3em（宽度 0%→100%），
+   与参照 ui-wipe-in scaleX(0→1) 同向（从左到右擦出底部条）。
+   触发 = .is-erasing 滚入视口后挂起（1s / var(--ui-ease) / both，无 mount 延迟）。
+   与 lib 作用域的 ui-wipe-in 区分命名，避免 demo 全局层与 scoped 哈希键冲突。 */
+@keyframes pg-mark-erase {
+  from { background-size: 0% 0.3em; }
+  to { background-size: 100% 0.3em; }
+}
